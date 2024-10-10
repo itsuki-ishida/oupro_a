@@ -18,6 +18,8 @@ HUSKYLENS huskylens;
 SoftwareSerial mySerial(2, 3);  // RX, TX //HUSKYLENS green line >> Pin 2; blue line >> Pin 3 : Connection with Arduino Uno
 
 int x;         // x coordinate of the block(tag) center
+int width;
+int height;
 int onof = 0;  // Start/Stop switch 1>>start 0>>sop
 
 void setup() {
@@ -75,8 +77,16 @@ void loop() {
       if (onof == 1) {
         if (result.ID == 3) {  //Tag 3 (ID == 3) >> Run to the target
           x = result.xCenter;  //x coordinate of of the tag 3 in the Huskylens display 
-          target(x);}
-        else { turning();
+          width = result.width;
+          height = result.height;
+          Serial.print('W');
+          Serial.println(width);  
+          Serial.print('H');
+          Serial.println(height);  
+
+          target(x);
+        } else {
+          turning();
         }
       }
     }       
