@@ -50,9 +50,28 @@ void loop() {
     while (huskylens.available()) {  //Huskylens is recognizing a tag.
       HUSKYLENSResult result = huskylens.read();
       Serial.println(result.ID);
-      if (result.ID == 1) onof = 1;           // Tag 1 (ID == 1) >> Start
-      else if (result.ID == 2) { onof = 0;   // Tag 2 (ID == 2) >> Stop
-        stop();}
+      if (result.ID == 1) {
+        onof = 1;  // Tag 1 (ID == 1) >> Start
+        int ItL = 150, ItR = 150 ;  //Speed of the left and right wheel
+
+        digitalWrite(IN1L,LOW);  // Turn the left wheels to move backward (LOW and HIGH)
+        digitalWrite(IN2L,HIGH);
+        digitalWrite(IN1R,LOW); // Turn the right wheels to move forward (HIGH and LOW)
+        digitalWrite(IN2R,HIGH);
+      
+        analogWrite(ENAL,ItL); //Power output
+        analogWrite(ENAR,ItR);
+        delay(100);            //Continue for 200ms
+      
+        digitalWrite(IN1L,LOW); //Stop the wheels
+        digitalWrite(IN2L,LOW);
+        digitalWrite(IN1R,LOW);
+        digitalWrite(IN2R,LOW);
+      }
+      else if (result.ID == 2) {
+        onof = 0;  // Tag 2 (ID == 2) >> Stop
+        stop();
+      }
       if (onof == 1) {
         if (result.ID == 3) {  //Tag 3 (ID == 3) >> Run to the target
           x = result.xCenter;  //x coordinate of of the tag 3 in the Huskylens display 
