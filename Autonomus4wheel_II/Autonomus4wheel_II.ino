@@ -22,6 +22,22 @@ int width;
 int height;
 int onof = 0;  // Start/Stop switch 1>>start 0>>sop
 
+void goBackCar() {
+  digitalWrite(IN1L,LOW); 
+  digitalWrite(IN2L,HIGH);
+  digitalWrite(IN1R,LOW); 
+  digitalWrite(IN2R,HIGH);
+
+  analogWrite(ENAL,ItL); //Power output
+  analogWrite(ENAR,ItR);
+  delay(100);            //Continue for 200ms
+
+  digitalWrite(IN1L,LOW); //Stop the wheels
+  digitalWrite(IN2L,LOW);
+  digitalWrite(IN1R,LOW);
+  digitalWrite(IN2R,LOW);
+}
+
 void setup() {
   pinMode(IN1L, OUTPUT);  // Setup Arduino pins for output
   pinMode(IN2L, OUTPUT);
@@ -55,23 +71,12 @@ void loop() {
         onof = 1;  // Tag 1 (ID == 1) >> Start
         int ItL = 150, ItR = 150 ;  //Speed of the left and right wheel
 
-        digitalWrite(IN1L,LOW);  // Turn the left wheels to move backward (LOW and HIGH)
-        digitalWrite(IN2L,HIGH);
-        digitalWrite(IN1R,LOW); // Turn the right wheels to move forward (HIGH and LOW)
-        digitalWrite(IN2R,HIGH);
-      
-        analogWrite(ENAL,ItL); //Power output
-        analogWrite(ENAR,ItR);
-        delay(100);            //Continue for 200ms
-      
-        digitalWrite(IN1L,LOW); //Stop the wheels
-        digitalWrite(IN2L,LOW);
-        digitalWrite(IN1R,LOW);
-        digitalWrite(IN2R,LOW);
+        // 後ろに下がる
+        goBackCar();
       }
       else if (result.ID == 2) {
         onof = 0;  // Tag 2 (ID == 2) >> Stop
-        stop();
+        stopCar();
       }
       if (onof == 1) {
         if (result.ID == 3) {  //Tag 3 (ID == 3) >> Run to the target
@@ -83,9 +88,9 @@ void loop() {
           Serial.print('H');
           Serial.println(height);  
 
-          target(x);
+          targetCar(x);
         } else {
-          turning();
+          turningCar();
         }
       }
     }
@@ -95,7 +100,7 @@ void loop() {
 }
 
 
-void target(int x) {             // Running to the target
+void targetCar(int x) {             // Running to the target
   int ImaxL = 150, ImaxR = 150;  //Maximum speed of the left and right wheel
   int IL, IR;                    //Speed of left and right wheel
   Serial.print('X');             //Header
@@ -123,7 +128,7 @@ void target(int x) {             // Running to the target
   Serial.println(IR);
 }
 
-void turning() {      // Turning to find the target
+void turningCar() {      // Turning to find the target
   Serial.print('T');  //Header 'T' is printed out to the serial monitaring wind
 
   int ItL = 150, ItR = 150;  //Speed of the left and right wheel
@@ -144,7 +149,7 @@ void turning() {      // Turning to find the target
   delay(200);  //Keep stopping for 200ms
 }
 
-void stop() {  // Stop
+void stopCar() {  // Stop
 
   digitalWrite(IN1L, LOW);
   digitalWrite(IN2L, LOW);
