@@ -69,7 +69,7 @@ int R_Flag=0;
 int C_Flag=0;
 int L_Flag=0;
 
-BLYNK_WRITE(V3)
+BLYNK_WRITE(V2)
 {
   R_Flag = param.asInt();
   Serial.println("R");
@@ -77,7 +77,7 @@ BLYNK_WRITE(V3)
   servo_R.writeMicroseconds(R_Flag);
   delay(5000);
 }
-BLYNK_WRITE(V2)
+BLYNK_WRITE(V0)
 {
   L_Flag = param.asInt();
   Serial.println("L");
@@ -85,7 +85,7 @@ BLYNK_WRITE(V2)
   servo_L.writeMicroseconds(L_Flag);
   delay(5000);
 }
-BLYNK_WRITE(V4)
+BLYNK_WRITE(V1)
 {
   C_Flag = param.asInt();
   Serial.println("C");
