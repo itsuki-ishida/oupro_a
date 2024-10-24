@@ -19,14 +19,22 @@
   2.This code is tested on Arduino Uno, Leonardo, Mega boards.
  ****************************************************/
 
+#define BLYNK_TEMPLATE_ID "TMPL6MIqKKVLW"
+#define BLYNK_TEMPLATE_NAME "ESP32"
+#define BLYNK_AUTH_TOKEN "Tje2UKH81BzHPAIBEaOCO88u-qGQY0CJ"
+
 #include <ESP32Servo.h> // <>で囲む場合：標準ライブラリやインストールされた外部ライブラリをインクルードする場合
 #include <Wire.h>
 #include <VL53L0X.h>
 #include "HUSKYLENS.h" // ""で囲む場合：ユーザーがプロジェクト内で作成したファイルや特定のローカルディレクトリに存在するファイルをインクルードする場合
 #include "SoftwareSerial.h"
+#include <WiFi.h>
+#include <WebServer.h>
+#include <BlynkSimpleEsp32.h>
 
 HUSKYLENS huskylens; // HUSKYLENSオブジェクトを生成
 VL53L0X sensor; // VL53L0Xオブジェクトを生成
+
 
 // 制御パラメータの定義
 const float Kp = 1.5; //比例ゲイン
@@ -52,7 +60,39 @@ Servo servo_L;
 bool back_flag = false;
 bool start_flag = false;
 
+char ssid[] = ssid; //文字列の宣言とssidの格納
+char pass[] = pass;
 
+WebServer server(80);
+
+int R_Flag=0;
+int C_Flag=0;
+int L_Flag=0;
+
+BLYNK_WRITE(V2)
+{
+  R_Flag = param.asInt();
+  Serial.println("R");
+  Serial.println(R_Flag);
+  servo_R.writeMicroseconds(R_Flag);
+  delay(5000);
+}
+BLYNK_WRITE(V0)
+{
+  L_Flag = param.asInt();
+  Serial.println("L");
+  Serial.println(L_Flag);
+  servo_L.writeMicroseconds(L_Flag);
+  delay(5000);
+}
+BLYNK_WRITE(V1)
+{
+  C_Flag = param.asInt();
+  Serial.println("C");
+  Serial.println(C_Flag);
+  servo_C.writeMicroseconds(C_Flag);
+  delay(5000);
+}
 
 SoftwareSerial mySerial(21, 22); // どこにesp32で繋げたか。21,22
 //HUSKYLENS green line >> Pin 21; blue line >> Pin 22
@@ -69,6 +109,21 @@ void setup() {
 
   Serial.begin(115200);
   mySerial.begin(9600);
+
+  WiFi.begin(ssid, pass);  // アクセスポイントに接続する
+  while (WiFi.status() != WL_CONNECTED) { // 接続完了したかどうかを判断
+    delay(500);                           // 完了していなければ500ミリ秒待つ
+    Serial.println(".");
+  }
+
+  server.on("/", handleRoot);
+  server.on("/RSERVO_ON", RSERVO_ON);
+  server.on("/RSERVO_OFF", RSERVO_OFF);
+  server.onNotFound(handleNotFound);
+  // Webサーバーを起動
+  server.begin();
+  Serial.println("server begin");
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
 
   while (!huskylens.begin(mySerial))
   {
@@ -106,6 +161,19 @@ void setup() {
 }
 
 void loop() {
+  Blynk.run();
+  if(WiFi.status()==WL_CONNECTED)
+  {
+    Serial.println("WiFi connected");       // シリアルモニタに「WiFi Connected」と出力
+    Serial.println(WiFi.localIP());         //IP
+    Serial.println(WiFi.subnetMask());      //subnet mask
+    Serial.println(WiFi.RSSI());      //RSSI
+  }
+  else
+  {
+    Serial.println("x");
+  }
+
   now_time = micros();
 
   if (now_time - start_time >= 180000000) { // スタートから180秒以上経っている場合
@@ -249,6 +317,39 @@ void printResult(HUSKYLENSResult result) {
   }
 }
 
+void handleRoot() {
+  String html;
+   
+  // HTMLを組み立てる
+  html = "<!DOCTYPE html>"; //「文書型の定義」 
+  html += "<html>"; //htmlの文書であることを示す
+  html += "<head>"; //ヘッダー情報
+  html += "<meta charset=\"utf-8\">"; //文字コードを指定
+  html += "<title>SERVOをONOFFする</title>"; //title情報
+  html += "</head>";
+  html += "<body>"; //文章の本文、ここの内容がwebページに表示される
+  html += "<p>リンクをクリックするとLEDがON,OFFします</p>"; //<p>はテキストの段落を表す
+  html += "<ul>"; //<ul>内で箇条書き開始、<li>内で各項目について記載  
+  html += "<li><a href=\"/RSERVO_ON\">RSERVO_ON</a></li>"; //<a href="リンク先のＵＲＬ">アンカーテキスト</a>
+  html += "<li><a href=\"/RSERVO_OFF\">RSERVO_OFF</a></li>"; //<a href="リンク先のＵＲＬ">アンカーテキスト</a>  
+  html += "</ul>";//箇条書き終了
+  html += "</body>";
+  html += "</html>";
+  
+  // HTMLを出力する
+  server.send(200, "text/html", html);
+}
 
+void RSERVO_ON(){
+  servo_R.writeMicroseconds(1600);
+  server.send(200, "text/plain; charset=utf-8", "RSERVOをONしました");
+}
 
+void RSERVO_OFF(){
+  servo_R.writeMicroseconds(1500);
+  server.send(200, "text/plain; charset=utf-8", "RSERVOをOFFしました");
+}
 
+void handleNotFound(void) {
+  server.send(404, "text/plain", "Not Found");
+}
